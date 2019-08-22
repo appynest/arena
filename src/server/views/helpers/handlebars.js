@@ -46,6 +46,16 @@ const helpers = {
 
   getDelayDate(opts) {
     return opts.timestamp + opts.delay;
+  },
+
+  getExtraInfo(data) {
+    return '(' + [take('_id'), take('subdomain')].filter(d => d).join(', ') + ')';
+
+    function take(prop) {
+      const value = data[prop]
+      if(!value) return null
+      return prop + ': ' + value 
+    }
   }
 };
 
