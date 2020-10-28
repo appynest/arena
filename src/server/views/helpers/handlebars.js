@@ -49,7 +49,7 @@ const helpers = {
   },
 
   getExtraInfo(data) {
-    return '(' + [take('_id'), take('subdomain'), take('invocationId'), take('timezone')].filter(d => d).join(', ') + ')';
+    return '(' + [take('_id'), take('subdomain'), take('invocationId'), take('timezone'), take('boxId')].filter(d => d).join(', ') + ')';
 
     function take(prop) {
       const value = data[prop]
