@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const _ = require('lodash');
 const Handlebars = require('handlebars');
+const debug = require('debug')
 
 const replacer = (key, value) => {
   if (_.isObject(value)) {
@@ -41,6 +42,10 @@ const helpers = {
   },
 
   hashIdAttr(id) {
+    if(!_.isString(id)) {
+      console.log('Received non string for ID', { id})
+      id = JSON.stringify(id)
+    }
     return crypto.createHash('sha256').update(id).digest('hex');
   },
 
@@ -54,7 +59,7 @@ const helpers = {
     function take(prop) {
       const value = data[prop]
       if(!value) return null
-      return prop + ': ' + value 
+      return prop + ': ' + value
     }
   }
 };
