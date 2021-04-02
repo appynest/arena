@@ -54,6 +54,7 @@ const helpers = {
   },
 
   getExtraInfo(data) {
+    if(!data || !_.isObject(data)) return '(unable to parse extra data ¯\\_(ツ)_/¯)'
     return '(' + [take('_id'), take('subdomain'), take('invocationId'), take('timezone'), take('boxId')].filter(d => d).join(', ') + ')';
 
     function take(prop) {
