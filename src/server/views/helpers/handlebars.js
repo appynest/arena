@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const _ = require('lodash');
 const Handlebars = require('handlebars');
-const debug = require('debug')
+const debug = require('debug');
 const moment = require('moment');
 
 const replacer = (key, value) => {
@@ -62,13 +62,26 @@ const helpers = {
   },
 
   getExtraInfo(data) {
-    if(!data || !_.isObject(data)) return '(unable to parse extra data ¯\\_(ツ)_/¯)'
-    return '(' + [take('_id'), take('subdomain'), take('invocationId'), take('timezone'), take('boxId')].filter(d => d).join(', ') + ')';
+    if (!data || !_.isObject(data))
+      return '(unable to parse extra data ¯\\_(ツ)_/¯)';
+    return (
+      '(' +
+      [
+        take('_id'),
+        take('subdomain'),
+        take('invocationId'),
+        take('timezone'),
+        take('boxId'),
+      ]
+        .filter((d) => d)
+        .join(', ') +
+      ')'
+    );
 
     function take(prop) {
-      const value = data[prop]
-      if(!value) return null
-      return prop + ': ' + value
+      const value = data[prop];
+      if (!value) return null;
+      return prop + ': ' + value;
     }
   },
 
