@@ -1,5 +1,19 @@
 <h2>Queue <code>{{ queueHost }}/{{ queueName }}</code></h2>
 
+{{#unless queueIsBee}}
+{{#if isPaused}}
+<button class="btn btn-xs btn-success js-resume-queue" style="margin-bottom: 12px;" data-queue-host="{{ queueHost }}"
+  data-queue-name="{{ queueName }}">
+  Resume queue
+</button>
+{{else}}
+<button class="btn btn-xs btn-danger js-pause-queue" style="margin-bottom: 12px;" data-queue-host="{{ queueHost }}"
+  data-queue-name="{{ queueName }}">
+  Pause queue
+</button>
+{{/if}}
+{{/unless}}
+
 <div class="row">
   <div class="col-sm-6">
     <div class="panel panel-default">
@@ -9,9 +23,15 @@
       </div>
       <div class="panel-body">
         <div class="jsoneditorx form-group hide overflow-hidden">
-          <div class="jsoneditorx hide" id="jsoneditor" style="height:200px;"></div>
+          <div class="jsoneditorx hide" id="jsoneditor" style="height:300px;"></div>
           <br />
-          <div class="js-add-job  btn btn-primary btn-sm pull-right">Create</div>
+          <div class="form-inline pull-right">
+            {{#unless queueIsBee}}
+            <input type="text" class="js-add-job-name form-control input-sm" style="margin-right: 10px;"
+              placeholder="Job name (optional)">
+            {{/unless}}
+            <div class="js-add-job btn btn-primary btn-sm">Create</div>
+          </div>
         </div>
         <ul class="list-group">
           {{#each jobCounts}}
@@ -34,10 +54,10 @@
       <div class="panel-body">
         <table class="table">
           {{#each stats}}
-            <tr>
-              <th>{{ @key }}</th>
-              <th>{{ this }}</th>
-            </tr>
+          <tr>
+            <th>{{ @key }}</th>
+            <th>{{ this }}</th>
+          </tr>
           {{/each}}
         </table>
       </div>
@@ -46,14 +66,17 @@
 </div>
 
 {{#contentFor 'sidebar'}}
-  <li><a href="{{ basePath }}/">Queues Overview</a></li>
-  <li class="active"><a href="#">Queue <code>{{ queueHost }}/{{ queueName }}</code></a></li>
+<li><a href="{{ basePath }}/">Queues Overview</a></li>
+<li class="active"><a href="#">Queue <code>{{ queueHost }}/{{ queueName }}</code></a></li>
+{{#if hasFlows}}
+<li><a href="{{ basePath }}/flows/">Flows Overview</a></li>
+{{/if}}
 {{/contentFor}}
 
 {{#contentFor 'script'}}
-  window.jsonEditor = new JSONEditor(document.getElementById('jsoneditor'), {});
-  window.arenaInitialPayload = {
-    queueHost: "{{ queueHost }}",
-    queueName: "{{ queueName }}"
-  };
+window.jsonEditor = new JSONEditor(document.getElementById('jsoneditor'), { modes: ['code','tree','text'] });
+window.arenaInitialPayload = {
+queueHost: "{{ queueHost }}",
+queueName: "{{ queueName }}"
+};
 {{/contentFor}}
