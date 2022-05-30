@@ -1,16 +1,30 @@
 const _ = require('lodash');
-const { BEE_STATES, BULL_STATES } = require('../helpers/queueHelpers');
+const {
+  BEE_STATES,
+  BULL_STATES,
+  BULLMQ_STATES,
+} = require('../helpers/queueHelpers');
+const JobHelpers = require('../helpers/jobHelpers');
 
+function getStates(queue) {
+  if (queue.IS_BEE) {
+    return BEE_STATES;
+  }
+  if (queue.IS_BULLMQ) {
+    return BULLMQ_STATES;
+  }
+  return BULL_STATES;
+}
 /**
  * Determines if the requested job state lookup is valid.
  *
  * @param {String} state
- * @param {Boolean} isBee States vary between bull and bee
+ * @param {Object} queue Queue that contains which queue package is used (bee, bull or bullmq)
  *
  * @return {Boolean}
  */
-function isValidState(state, isBee) {
-  const validStates = isBee ? BEE_STATES : BULL_STATES;
+function isValidState(state, queue) {
+  const validStates = getStates(queue);
   return _.includes(validStates, state);
 }
 
@@ -27,19 +41,24 @@ async function handler(req, res) {
  * @prop {Object} res express response object
  */
 async function _json(req, res) {
-  const { queueName, queueHost, state } = req.params;
+  const {queueName, queueHost, state} = req.params;
   const {Queues} = req.app.locals;
   const queue = await Queues.get(queueName, queueHost);
-  if (!queue) return res.status(404).json({ message: 'Queue not found' });
+  if (!queue) return res.status(404).json({message: 'Queue not found'});
 
-  if (!isValidState(state, queue.IS_BEE)) return res.status(400).json({ message: `Invalid state requested: ${state}` });
+  if (!isValidState(state, queue))
+    return res.status(400).json({message: `Invalid state requested: ${state}`});
 
   let jobs;
   if (queue.IS_BEE) {
-    jobs = await queue.getJobs(state, { size: 1000 });
-    jobs = jobs.map((j) => _.pick(j, 'id', 'progress', 'data', 'options', 'status'));
+    jobs = await queue.getJobs(state, {size: 1000});
+    jobs = jobs.map((j) =>
+      _.pick(j, 'id', 'progress', 'data', 'options', 'status')
+    );
   } else {
-    jobs = await queue[`get${_.capitalize(state)}`](0, 1000);
+    const words = state.split('-');
+    const finalStateName = words.map((word) => _.capitalize(word)).join('');
+    jobs = await queue[`get${finalStateName}`](0, 1000);
     jobs = jobs.map((j) => j.toJSON());
   }
 
@@ -57,13 +76,19 @@ async function _json(req, res) {
  * @prop {Object} res express response object
  */
 async function _html(req, res) {
-  const { queueName, queueHost, state } = req.params;
-  const {Queues} = req.app.locals;
+  const {queueName, queueHost, state} = req.params;
+  const {Queues, Flows} = req.app.locals;
   const queue = await Queues.get(queueName, queueHost);
   const basePath = req.baseUrl;
-  if (!queue) return res.status(404).render('dashboard/templates/queueNotFound', {basePath, queueName, queueHost});
+  if (!queue)
+    return res.status(404).render('dashboard/templates/queueNotFound', {
+      basePath,
+      queueName,
+      queueHost,
+    });
 
-  if (!isValidState(state, queue.IS_BEE)) return res.status(400).json({ message: `Invalid state requested: ${state}` });
+  if (!isValidState(state, queue))
+    return res.status(400).json({message: `Invalid state requested: ${state}`});
 
   let jobCounts;
   if (queue.IS_BEE) {
@@ -75,35 +100,49 @@ async function _html(req, res) {
 
   const page = parseInt(req.query.page, 10) || 1;
   const pageSize = parseInt(req.query.pageSize, 10) || 100;
+  const order = req.query.order || 'desc';
 
   const startId = (page - 1) * pageSize;
   const endId = startId + pageSize - 1;
 
   let jobs;
   if (queue.IS_BEE) {
-    const page = {};
+    const pageOptions = {};
 
     if (['failed', 'succeeded'].includes(state)) {
-      page.size = pageSize;
+      pageOptions.size = pageSize;
     } else {
-      page.start = startId;
-      page.end = endId;
+      pageOptions.start = startId;
+      pageOptions.end = endId;
     }
 
-    jobs = await queue.getJobs(state, page);
+    jobs = await queue.getJobs(state, pageOptions);
 
     // Filter out Bee jobs that have already been removed by the time the promise resolves
     jobs = jobs.filter((job) => job);
   } else {
-    jobs = await queue[`get${_.capitalize(state)}`](startId, endId);
+    const stateTypes = state === 'waiting' ? ['wait', 'paused'] : state;
+    jobs = await queue.getJobs(stateTypes, startId, endId, order === 'asc');
   }
 
-  let pages = _.range(page - 6, page + 7)
-    .filter((page) => page >= 1);
+  for (const job of jobs) {
+    const jobState = queue.IS_BEE ? job.status : await job.getState();
+    job.showRetryButton = !queue.IS_BEE || jobState === 'failed';
+    job.retryButtonText = jobState === 'failed' ? 'Retry' : 'Trigger';
+    job.showPromoteButton = !queue.IS_BEE && jobState === 'delayed';
+    job.parent = JobHelpers.getKeyProperties(job.parentKey);
+  }
+
+  let pages = _.range(page - 6, page + 7).filter((page) => page >= 1);
   while (pages.length < 12) {
     pages.push(_.last(pages) + 1);
   }
   pages = pages.filter((page) => page <= _.ceil(jobCounts[state] / pageSize));
+  const disablePromote = !(state === 'delayed' && !queue.IS_BEE);
+  const disableRetry = !(
+    state === 'failed' ||
+    (state === 'delayed' && !queue.IS_BEE)
+  );
 
   return res.render('dashboard/templates/queueJobsByState', {
     basePath,
@@ -112,11 +151,17 @@ async function _html(req, res) {
     state,
     jobs,
     jobsInStateCount: jobCounts[state],
-    disablePagination: queue.IS_BEE && (state === 'succeeded' || state === 'failed'),
+    disablePagination:
+      queue.IS_BEE && (state === 'succeeded' || state === 'failed'),
+    disableOrdering: queue.IS_BEE,
+    disablePromote,
+    disableRetry,
     currentPage: page,
+    hasFlows: Flows.hasFlows(),
     pages,
     pageSize,
-    lastPage: _.last(pages)
+    lastPage: _.last(pages),
+    order,
   });
 }
 
