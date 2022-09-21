@@ -100,7 +100,7 @@ async function _html(req, res) {
 
   const page = parseInt(req.query.page, 10) || 1;
   const pageSize = parseInt(req.query.pageSize, 10) || 100;
-  const order = req.query.order || 'desc';
+  const order = req.query.order || state === 'delayed' ? 'asc' : 'desc';
 
   const startId = (page - 1) * pageSize;
   const endId = startId + pageSize - 1;
