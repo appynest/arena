@@ -1,3 +1,27 @@
+### [3.30.1](https://github.com/bee-queue/arena/compare/v3.30.0...v3.30.1) (2022-11-07)
+
+### Bug Fixes
+
+- **remove-repeatable:** consider old versions of bull ([#580](https://github.com/bee-queue/arena/issues/580)) ([f406750](https://github.com/bee-queue/arena/commit/f406750ba4654918e194574caa08d29048f6ed03))
+
+## [3.30.0](https://github.com/bee-queue/arena/compare/v3.29.5...v3.30.0) (2022-10-18)
+
+### Features
+
+- **bull:** support removing repeatable jobs ([#574](https://github.com/bee-queue/arena/issues/574)) ([29528cf](https://github.com/bee-queue/arena/commit/29528cfeea91dcf8771551c44fd4dc5e29f87718))
+
+### [3.29.5](https://github.com/bee-queue/arena/compare/v3.29.4...v3.29.5) (2022-08-11)
+
+### Bug Fixes
+
+- **deps:** bump minimist from 1.2.5 to 1.2.6 ([#507](https://github.com/bee-queue/arena/issues/507)) ([229cfe3](https://github.com/bee-queue/arena/commit/229cfe3a90e41f11a296fd169e09a5628e948f77))
+
+### [3.29.4](https://github.com/bee-queue/arena/compare/v3.29.3...v3.29.4) (2022-08-11)
+
+### Bug Fixes
+
+- **deps:** bump moment from 2.29.1 to 2.29.4 ([#540](https://github.com/bee-queue/arena/issues/540)) ([81f13a8](https://github.com/bee-queue/arena/commit/81f13a83cf38574746b6f23ae981819383e7a6f6))
+
 ### [3.29.3](https://github.com/bee-queue/arena/compare/v3.29.2...v3.29.3) (2021-09-08)
 
 ### Bug Fixes
