@@ -1,4 +1,5 @@
 const Arena = require('../');
+const fastify = require('fastify');
 const {Queue, Worker, FlowProducer} = require('bullmq');
 const RedisServer = require('redis-server');
 
@@ -9,6 +10,7 @@ const REDIS_SERVER_PORT = 4736;
 // Create a Redis server. This is only for convenience
 
 async function main() {
+  const app = fastify();
   const server = new RedisServer(REDIS_SERVER_PORT);
   await server.open();
   const queueName = 'name_of_my_queue';
@@ -76,7 +78,7 @@ async function main() {
   const delayedJob = await queue.add('delayed', {}, {delay: 60 * 1000});
   delayedJob.log('Log message');
 
-  Arena(
+  const arena = Arena(
     {
       BullMQ: Queue,
 
@@ -114,9 +116,18 @@ async function main() {
       ],
     },
     {
-      port: HTTP_SERVER_PORT,
+      basePath: '/',
+      disableListen: true,
     }
   );
+
+  await app.register(require('@fastify/express'));
+  app.use('/arena', arena);
+
+  app.listen({port: HTTP_SERVER_PORT}, (err, address) => {
+    if (err) throw err;
+    console.log(`Arena listening on port ${HTTP_SERVER_PORT}!`);
+  });
 }
 
 main().catch((err) => {
