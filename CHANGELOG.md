@@ -1,3 +1,25 @@
+## [4.1.0](https://github.com/bee-queue/arena/compare/v4.0.1...v4.1.0) (2023-10-28)
+
+### Features
+
+- **bullmq:** support removing repeatable jobs ([#667](https://github.com/bee-queue/arena/issues/667)) ([df1ab37](https://github.com/bee-queue/arena/commit/df1ab37ac51af342ffbadff8aeba2b18313a2dbb))
+
+### [4.0.1](https://github.com/bee-queue/arena/compare/v4.0.0...v4.0.1) (2023-09-11)
+
+### Bug Fixes
+
+- **job-details:** omit scripts attribute to stringify jobs ([#665](https://github.com/bee-queue/arena/issues/665)) fixes [#598](https://github.com/bee-queue/arena/issues/598) ([a76ed5f](https://github.com/bee-queue/arena/commit/a76ed5f9c7d48e647e62a16ef282a77c3eafc999))
+
+## [4.0.0](https://github.com/bee-queue/arena/compare/v3.30.4...v4.0.0) (2023-09-02)
+
+### ⚠ BREAKING CHANGES
+
+- **bullmq:** add new prioritized state, previous versions of bullmq wont't see this state
+
+### Features
+
+- **bullmq:** support prioritized state ([#664](https://github.com/bee-queue/arena/issues/664)) ([9a7541c](https://github.com/bee-queue/arena/commit/9a7541cd08fa33e8c4f75f8fc38dae3a63eacaa2))
+
 ### [3.30.4](https://github.com/bee-queue/arena/compare/v3.30.3...v3.30.4) (2023-02-18)
 
 ### Bug Fixes
