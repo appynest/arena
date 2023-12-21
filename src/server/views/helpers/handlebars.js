@@ -159,6 +159,10 @@ const helpers = {
     return moment(date).format(format);
   },
 
+  momentHuman(date) {
+    return moment(date).fromNow();
+  },
+
   eq(a, b, options) {
     return a === b ? options.fn(this) : options.inverse(this);
   },

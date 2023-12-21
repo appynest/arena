@@ -59,7 +59,7 @@
   {{#eq jobState 'delayed'}}
   <div class="col-sm-3">
     <h5>Executes At</h5>
-    {{moment (getDelayedExecutionAt this) "llll"}}
+    {{moment (getDelayedExecutionAt this) "llll"}} ({{ momentHuman (getDelayedExecutionAt this) }})
   </div>
   {{/eq}}
 
