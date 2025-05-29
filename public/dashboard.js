@@ -7,15 +7,14 @@ $(document).ready(() => {
 
   function formatToTreeView(flow, flowHost) {
     const {job, children} = flow;
+    if (!job) {
+      return {};
+    }
     const text = `${job.name} <a href="${basePath}/${encodeURIComponent(
       flowHost
     )}/${encodeURIComponent(job.queueName)}/${
       job.id
     }"><span class="label label-default">${job.id}</span></a>`;
-
-    const href = `${basePath}/${encodeURIComponent(
-      flowHost
-    )}/${encodeURIComponent(job.queueName)}/${job.id}`;
 
     if (children && children.length > 0) {
       return {
@@ -210,38 +209,60 @@ $(document).ready(() => {
       queueState,
     };
 
-    $bulkActionContainer.each((index, value) => {
-      const isChecked = $(value).find('[name=jobChecked]').is(':checked');
-      const id = encodeURIComponent($(value).find('[name=jobId]').val());
+    if (action !== 'clean') {
+      $bulkActionContainer.each((index, value) => {
+        const isChecked = $(value).find('[name=jobChecked]').is(':checked');
+        const id = encodeURIComponent($(value).find('[name=jobId]').val());
 
-      if (isChecked) {
-        data.jobs.push(id);
-      }
-    });
+        if (isChecked) {
+          data.jobs.push(id);
+        }
+      });
+    }
+
+    const count = action === 'clean' ? 1000 : data.jobs.length;
 
     const r = window.confirm(
-      `${capitalize(action)} ${data.jobs.length} ${
-        data.jobs.length > 1 ? 'jobs' : 'job'
+      `${capitalize(action)} ${count} ${
+        count > 1 ? 'jobs' : 'job'
       } in queue "${queueHost}/${queueName}"?`
     );
     if (r) {
-      $.ajax({
-        method: action === 'remove' ? 'POST' : 'PATCH',
-        url: `${basePath}/api/queue/${encodeURIComponent(
-          queueHost
-        )}/${encodeURIComponent(queueName)}/${
-          action === 'promote' ? 'delayed/' : ''
-        }job/bulk`,
-        data: JSON.stringify(data),
-        contentType: 'application/json',
-      })
-        .done(() => {
-          window.location.reload();
+      if (action === 'clean') {
+        $.ajax({
+          method: 'DELETE',
+          url: `${basePath}/api/queue/${encodeURIComponent(
+            queueHost
+          )}/${encodeURIComponent(queueName)}/jobs/bulk`,
+          data: JSON.stringify(data),
+          contentType: 'application/json',
         })
-        .fail((jqXHR) => {
-          window.alert(`Request failed, check console for error.`);
-          console.error(jqXHR.responseText);
-        });
+          .done(() => {
+            window.location.reload();
+          })
+          .fail((jqXHR) => {
+            window.alert(`Request failed, check console for error.`);
+            console.error(jqXHR.responseText);
+          });
+      } else {
+        $.ajax({
+          method: action === 'remove' ? 'POST' : 'PATCH',
+          url: `${basePath}/api/queue/${encodeURIComponent(
+            queueHost
+          )}/${encodeURIComponent(queueName)}/${
+            action === 'promote' ? 'delayed/' : ''
+          }job/bulk`,
+          data: JSON.stringify(data),
+          contentType: 'application/json',
+        })
+          .done(() => {
+            window.location.reload();
+          })
+          .fail((jqXHR) => {
+            window.alert(`Request failed, check console for error.`);
+            console.error(jqXHR.responseText);
+          });
+      }
     } else {
       $(this).prop('disabled', false);
     }
@@ -312,6 +333,38 @@ $(document).ready(() => {
         window.alert('Failed to save job, check console for error.');
         console.error(jqXHR.responseText);
       });
+  });
+
+  $('.js-update-job-data').on('click', function (e) {
+    e.preventDefault();
+    const jobId = $(this).data('job-id');
+    const queueName = $(this).data('queue-name');
+    const queueHost = $(this).data('queue-host');
+    const stringifiedData = JSON.stringify(window.jsonEditor.get());
+    const r = window.confirm(
+      `Update job #${jobId} data in queue "${queueHost}/${queueName}"?`
+    );
+
+    if (r) {
+      $.ajax({
+        url: `${basePath}/api/queue/${encodeURIComponent(
+          queueHost
+        )}/${encodeURIComponent(queueName)}/job/${encodeURIComponent(
+          jobId
+        )}/data`,
+        type: 'PUT',
+        data: stringifiedData,
+        contentType: 'application/json',
+      })
+        .done(() => {
+          alert('Job data successfully updated!');
+          window.location.reload();
+        })
+        .fail((jqXHR) => {
+          window.alert('Failed to update job data, check console for error.');
+          console.error(jqXHR.responseText);
+        });
+    }
   });
 
   $('.js-add-flow').on('click', function () {
